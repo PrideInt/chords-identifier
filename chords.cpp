@@ -1,79 +1,176 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
+#include <sstream>
+#include <cctype>
 
 using namespace std;
 
 map<string, string> getMinorChords();
 map<string, string> getMajorChords();
 
+vector<string> split(string str, char delimiter);
+
+string getUppercaseNote(string note);
+
 bool isMajor(char key);
 bool isMinor(char key);
 
-struct minor;
-struct major;
+struct stringbuilder;
+struct scale;
+
+struct stringbuilder {
+    string str;
+
+    stringbuilder() {
+        str = "";
+    }
+
+    stringbuilder(string str) {
+        this->str = str;
+    }
+
+    stringbuilder append(string str) {
+        this->str += str;
+        return *this;
+    }
+
+    stringbuilder append(char c) {
+        this->str += c;
+        return *this;
+    }
+
+    string toString() {
+        return str;
+    }
+};
+
+struct scale {
+    bool isMajor;
+    string key;
+    string i;
+    string ii;
+    string iii;
+    string iv;
+    string v;
+    string vi;
+    string vii;
+
+    scale(string key, string i, string ii, string iii, string iv, string v, string vi, string vii) {
+        this->key = key;
+        this->i = i;
+        this->ii = ii;
+        this->iii = iii;
+        this->iv = iv;
+        this->v = v;
+        this->vi = vi;
+        this->vii = vii;
+    }
+
+    scale isMajorScale(bool isMajor) {
+        this->isMajor = isMajor;
+        return *this;
+    }
+
+    scale init() {
+        if (isMajor) {
+            return scale(key, getUppercaseNote(i), ii, iii, getUppercaseNote(iv), getUppercaseNote(v), vi, vii + "dim");
+        } else {
+            return scale(key, i, ii + "dim", getUppercaseNote(iii), iv, v, getUppercaseNote(vi), getUppercaseNote(vii));
+        }
+        return *this;
+    }
+};
 
 int main() {
+    cout << "\n\n\n\n\n";
     cout << "Enter a key: ";
 
     string key;
 
     cin >> key;
 
-    if (isMajor(key[0])) {
-        map<string, string> majorChords = getMajorChords();
+    bool isMajorKey = isMajor(key[0]);
+    map<string, string> keyChords;
 
-        cout << majorChords[key] << endl;
-    } else if (isMinor(key[0])) {
-        map<string, string> minorChords = getMinorChords();
-
-        cout << minorChords[key] << endl;
+    if (isMajorKey) {
+        keyChords = getMajorChords();
     } else {
-        cout << "Invalid key" << endl;
+        keyChords = getMinorChords();
     }
+    vector<string> chords = split(keyChords[key], ' ');
+
+    scale s(key, chords[0], chords[1], chords[2], chords[3], chords[4], chords[5], chords[6]);
+    s = s.isMajorScale(isMajorKey);
+    s = s.init();
+
+    cout << s.i + " " + s.ii + " " + s.iii + " " + s.iv + " " + s.v + " " + s.vi + " " + s.vii + "\n";
+
+    cout << "\n\n\n\n\n";
     return 0;
 }
 
 map<string, string> getMinorChords() {
     map<string, string> minorChords;
-    minorChords["a"] = "Am Bdim C Dm Em F G";
-    minorChords["e"] = "Em F#dim G Am Bm C D";
-    minorChords["b"] = "Bm C#dim D Em F#m G A";
-    minorChords["f#"] = "F#m G#dim A Bm C#m D E";
-    minorChords["c#"] = "C#m D#dim E F#m G#m A B";
-    minorChords["g#"] = "G#m A#dim B C#m D#m E F#";
-    minorChords["d#"] = "D#m E#dim F# G#m A#m B C#";
-    minorChords["a#"] = "A#m B#dim C# D#m E#m F# G#";
-    minorChords["d"] = "Dm Edim F Gm Am Bb C";
-    minorChords["g"] = "Gm Adim A Cm Dm Eb F";
-    minorChords["c"] = "Cm Ddim Eb Fm Gm Ab Bb";
-    minorChords["f"] = "Fm Gdim Ab Bbm Cm Db Eb";
-    minorChords["bb"] = "Bbm Cdim Db Ebm Fm Gb Ab";
-    minorChords["eb"] = "Ebm Fdim Gb Abm Bbm Cb Db";
-    minorChords["ab"] = "Abm Bbdim Cb Dbm Ebm Fb Gb";
+    minorChords["a"] = "a b c d e f g";
+    minorChords["e"] = "e f# g a b c d";
+    minorChords["b"] = "b c# d e f# g a";
+    minorChords["f#"] = "f# g# a b c# d e";
+    minorChords["c#"] = "c# d# e f# g# a b";
+    minorChords["g#"] = "g# a# b c# d# e f#";
+    minorChords["d#"] = "d# e# f# g# a# b c#";
+    minorChords["a#"] = "a# b# c# d# e# f# g#";
+    minorChords["d"] = "d e f g a bb c";
+    minorChords["g"] = "g a a c d eb f";
+    minorChords["c"] = "c d eb f g ab bb";
+    minorChords["f"] = "f g ab bb c db eb";
+    minorChords["bb"] = "eb c db eb f gb ab";
+    minorChords["eb"] = "eb f gb ab bb cb db";
+    minorChords["ab"] = "ab bb cb db eb fb gb";
 
     return minorChords;
 }
 
 map<string, string> getMajorChords() {
     map<string, string> majorChords;
-    majorChords["C"] = "C Dm Em F G Am B";
-    majorChords["G"] = "G Am Bm C D Em F#";
-    majorChords["D"] = "D Em F#m G A Bm C#";
-    majorChords["A"] = "A Bm C#m D E F#m G#";
-    majorChords["E"] = "E F#m G#m A B C#m D#";
-    majorChords["B"] = "B C#m D#m E F# G#m A#";
-    majorChords["F#"] = "F# G#m A#m B C# D#m E#";
-    majorChords["C#"] = "C# D#m E#m F# G# A#m B#";
-    majorChords["F"] = "F Gm Am Bb C Dm E";
-    majorChords["Bb"] = "Bb Cm Dm Eb F Gm A";
-    majorChords["Eb"] = "Eb Fm Gm Ab Bb Cm D";
-    majorChords["Ab"] = "Ab Bbm Cm Db Eb Fm G";
-    majorChords["Db"] = "Db Ebm Fm Gb Ab Bbm C";
-    majorChords["Gb"] = "Gb Abm Bbm Cb Db Ebm F";
-    majorChords["Cb"] = "Cb Dbm Ebm Fb Gb Abm Bb";
+
+    majorChords["A"] = "a b c# d e f# g#";
+    majorChords["E"] = "e f# g# a b c# d#";
+    majorChords["B"] = "b c# d# e f# g# a#";
+    majorChords["F#"] = "f# g# a# b c# d# e#";
+    majorChords["C#"] = "c# d# e# f# g# a# b#";
+    majorChords["G#"] = "g# a# b# c# d# e# f##";
+    majorChords["D#"] = "d# e# f## g# a# b# c##";
+    majorChords["A#"] = "a# b# c## d# e# f## g##";
+    majorChords["D"] = "d e f# g a b c#";
+    majorChords["G"] = "g a b c d e f#";
+    majorChords["C"] = "c d e f g a b";
+    majorChords["F"] = "f g a bb c d e";
+    majorChords["Bb"] = "bb c d eb f g a";
+    majorChords["Eb"] = "eb f g ab bb c d";
+    majorChords["Ab"] = "ab bb c db eb f g";
 
     return majorChords;
+}
+
+vector<string> split(string str, char delimiter) {
+    vector<string> internal;
+    stringstream stream(str);
+    string token;
+
+    while (getline(stream, token, delimiter)) {
+        internal.push_back(token);
+    }
+    return internal;
+}
+
+string getUppercaseNote(string note) {
+    stringbuilder builder("");
+    builder.append(toupper(note[0]));
+    builder.append(note.substr(1));
+
+    return builder.toString();
 }
 
 bool isMajor(char key) {
@@ -83,47 +180,3 @@ bool isMajor(char key) {
 bool isMinor(char key) {
     return key == 'a' || key == 'b' || key == 'c' || key == 'd' || key == 'e' || key == 'f' || key == 'g';
 }
-
-struct minor {
-    string key;
-    string i;
-    string ii;
-    string III;
-    string iv;
-    string v;
-    string VI;
-    string VII;
-
-    minor(string key, string i, string ii, string III, string iv, string v, string VI, string VII) {
-        this->key = key;
-        this->i = i;
-        this->ii = ii + "dim";
-        this->III = III;
-        this->iv = iv;
-        this->v = v;
-        this->VI = VI;
-        this->VII = VII;
-    }
-};
-
-struct major {
-    string key;
-    string I;
-    string ii;
-    string iii;
-    string IV;
-    string V;
-    string vi;
-    string vii;
-
-    major(string key, string I, string ii, string iii, string IV, string V, string vi, string vii) {
-        this->key = key;
-        this->I = I;
-        this->ii = ii;
-        this->iii = iii;
-        this->IV = IV;
-        this->V = V;
-        this->vi = vi;
-        this->vii = vii + "dim";
-    }
-};
